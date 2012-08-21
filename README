@@ -1,0 +1,15 @@
+== Installation on linux ==
+
+Everything is in a package called nimble.
+You can copy it to any place in a PYTHONPATH
+or to use setup.py to install nimble system-wide like:
+
+$ sudo './setup.py install'
+
+or
+
+$ su -c './setup.py install'
+
+== Test project ==
+
+Look into testproject directory for an example how to use nimble
