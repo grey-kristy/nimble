@@ -61,7 +61,7 @@ class Server(object):
             def f():
                 #makes an opportunity to load everything just before shutting down last instance or to invoke init before any real work
                 if fullLoadBeforeStart:
-                    cls.get_instance(secret=secret, auth_id=auth_id, port=port, ip=ip)
+                    pass#cls.get_instance(secret=secret, auth_id=auth_id, port=port, ip=ip)
                 return func()
             return f
 

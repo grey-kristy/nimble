@@ -19,7 +19,7 @@ class ServerClient(object):
     SERVER_CLASS = None
 
     def __init__(self, server, default_protocol=DEFAULT_PROTOCOL, request_maker=simple_request_over_http, secret=None):
-        serverobj = self.SERVER_CLASS.get_instance()
+        serverobj = self.SERVER_CLASS()
         self.protocol = default_protocol
         self.server = server
         self.secret = secret

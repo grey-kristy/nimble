@@ -95,7 +95,7 @@ class TestingClient(ServerClient):
         self.SERVER_CLASS = serverClass
 
         t0 = NOW()
-        server = serverClass.get_instance(secret=secret)
+        server = serverClass(secret=secret)
         t = NOW()
 
         print 'server %s initialized in %s'%(serverClass.__name__, t-t0)
