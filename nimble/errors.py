@@ -36,11 +36,14 @@ class NimbleException(Exception):
     @staticmethod
     def load(dumped_exception):
         if len(dumped_exception) > 1:
-            __import__(dumped_exception[1])
-            module = sys.modules[dumped_exception[1]]
-            cls = getattr(module, dumped_exception[0])
-            data = urllib.unquote(dumped_exception[2])
-            return cls.load_exception(data)
+            try:
+                __import__(dumped_exception[1])
+                module = sys.modules[dumped_exception[1]]
+                cls = getattr(module, dumped_exception[0])
+                data = urllib.unquote(dumped_exception[2])
+                return cls.load_exception(data)
+            except ImportError:
+                pass
         return Exception(dumped_exception)
 
 class ConnectionError(NimbleException):

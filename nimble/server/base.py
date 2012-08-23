@@ -60,8 +60,8 @@ class Server(object):
         def loadable(func):
             def f():
                 #makes an opportunity to load everything just before shutting down last instance or to invoke init before any real work
-                if fullLoadBeforeStart:
-                    pass#cls.get_instance(secret=secret, auth_id=auth_id, port=port, ip=ip)
+                # if fullLoadBeforeStart:
+                #     cls.get_instance(secret=secret, auth_id=auth_id, port=port, ip=ip)
                 return func()
             return f
 
@@ -78,6 +78,12 @@ class Server(object):
 
         sys.exit(0)
 
+    @shared
+    def _get_signatures_(self, connection):
+        res = self._callbacks.keys()
+        res.remove('_get_signatures_')
+        return connection.OK(res)
+
     #no net-specific calls are allowed, because there's no net environment or binded sockets at this moment
     def __init__(self, ip=None, port=None, secret=None, auth_id=None):
         self.secret = secret
@@ -91,7 +97,11 @@ class Server(object):
 
     def process_request(self, start_response, environ):
         connection = make_server_connection(start_response, environ)
-        command, params = connection.load_request()
+        try:
+            command, params = connection.load_request()
+        except:
+            command, params = "_get_signatures_", []
+
         return self._callbacks[command](connection, *params)
 
     def process_upload_request(self, start_response, environ):
@@ -99,7 +109,3 @@ class Server(object):
         filename, filedata = connection.load_file()
 
         return self._callbacks[command](connection, filename, filedata)
-
-    @shared
-    def _invalid_request(self, connection):
-        return connection.ERROR()

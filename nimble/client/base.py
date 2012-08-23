@@ -28,3 +28,16 @@ class ServerClient(object):
             f = request_maker(self, shared_name=nv, shared_method=meth)
             setattr(self, meth.__name__, f)
 
+class UniversalClient(object):
+     def __init__(self, server, default_protocol=DEFAULT_PROTOCOL, request_maker=simple_request_over_http, secret=None):
+        self.protocol = default_protocol
+        self.server = server
+        self.secret = secret
+
+        empty = lambda: None
+        f = request_maker(self, shared_name="", shared_method=empty)
+        signatures = f()
+
+        for meth_name in signatures:
+            f = request_maker(self, shared_name=meth_name, shared_method=empty)
+            setattr(self, meth_name, f)

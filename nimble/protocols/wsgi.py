@@ -52,8 +52,6 @@ class ServerConnection(object):
         @returns: parameters structure
          @errors:
         """
-        if self.environ.get('CONTENT_LENGTH', '') == '':
-            return '_invalid_request'
         return self.environ['wsgi.input'].read(int(self.environ['CONTENT_LENGTH']))
 #        data = data.split('__', 1)
 #        self.secret = data[0]
@@ -99,12 +97,12 @@ class ClientConnection(object):
         raise NotImplemented
 
     def request(self, data):
-#        post_body = '__' + self.dump_request(data)
         post_body = self.dump_request(data)
         try:
-#            if self.secret is not None:
-#                post_body = self.secret + post_body
-            raw_data = urllib2.urlopen(self.server, data=post_body).read()
+            if not post_body:
+                raw_data = urllib2.urlopen(self.server).read()
+            else:
+                raw_data = urllib2.urlopen(self.server, data=post_body).read()
         except urllib2.HTTPError, ex:
             raise ServerIsDown('%s: %s'%(self.server, ex))
 
