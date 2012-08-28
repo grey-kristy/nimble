@@ -9,7 +9,11 @@ from nimble.protocols.tools import make_server_connection
 class Server(object):
     """
     base class to be used as superclass for every nimble server
-    aggregates: *nix daemon management (including cmd), WSGI processing as a 'flup' application, request deserializing, public functions calls management through callback system
+    aggregates: 
+        *nix daemon management (including cmd), 
+        WSGI processing as a 'flup' application, 
+        request deserializing, 
+        public functions calls management through callback system
     """
 
     singleton = None
