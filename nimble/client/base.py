@@ -28,7 +28,7 @@ class ServerClient(object):
             f = request_maker(self, shared_name=nv, shared_method=meth)
             setattr(self, meth.__name__, f)
 
-class UniversalClient(object):
+class StandaloneClient(object):
      def __init__(self, server, default_protocol=DEFAULT_PROTOCOL, request_maker=simple_request_over_http, secret=None):
         self.protocol = default_protocol
         self.server = server

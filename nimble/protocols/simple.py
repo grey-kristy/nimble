@@ -8,7 +8,7 @@ class ServerConnection(wsgi.ServerConnection):
     _ERR = ("ERROR", "ERROR\n%s")
 
     def _process_list(self, data, tmpl):
-        if isinstance(data[0], self.LIST_TYPES):
+        if data and isinstance(data[0], self.LIST_TYPES):
             return tmpl%('\n'.join([' '.join(p) for p in data]))
         return tmpl%(' '.join(data))
 
