@@ -1,7 +1,7 @@
 import nimble.protocols.simple as simple
 import nimble.protocols.json as json
 
-DEFAULT_PROTOCOL = simple
+DEFAULT_PROTOCOL = json
 
 DEFAULT_PROTOCOL_SELECTOR = {'1': simple, '2': json}
 DEFAULT_PROTOCOL_ALIAS_SELECTOR = dict([(p, a) for a, p in DEFAULT_PROTOCOL_SELECTOR.items()])
