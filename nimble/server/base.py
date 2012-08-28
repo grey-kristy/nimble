@@ -94,6 +94,7 @@ class Server(object):
         self.ip = ip
         self.port = port
         self.auth = Auth(auth_id, None)
+        self.logfile = self.__class__.__name__
         #TODO: bad design
         self.clientMode = not self.ip and not self.port
 
@@ -103,6 +104,8 @@ class Server(object):
         connection = make_server_connection(start_response, environ)
         try:
             command, params = connection.load_request()
+            if not command:
+                command = "_get_signatures_"
         except:
             command, params = "_get_signatures_", []
 
