@@ -17,6 +17,7 @@ class Server(object):
     """
 
     singleton = None
+    connection_protocol = None
 
     @classmethod
     def application(cls, environ, start_response):
@@ -27,6 +28,9 @@ class Server(object):
             frontend_server=frontend.DEFAULT, **frontend_opts):
         if cls.singleton is None:
              cls.singleton = cls(ip=ip, port=port, secret=secret, auth_id=auth_id)
+        
+        cls.connection_protocol = frontend_server.connection_protocol
+
         frontend_server(address=(ip,port), application=cls.application,
                         **frontend_opts).loop()
 
@@ -35,20 +39,32 @@ class Server(object):
                     debug=False, frontend_server=frontend.FlupServer, **frontend_opts):
         for arg in sys.argv[2:]:
             if arg.startswith('port='):
-                port = int(arg.split('=')[1])
+                port = arg.split('=')[1]
+                if port.lower() == 'none':
+                    port = None
+                else:
+                    port = int(port)
             elif arg.startswith('pidfile='):
                 pidfile = arg.split('=')[1]
+
             elif arg.startswith('ip='):
                 ip = arg.split('=')[1]
+
             elif arg.startswith('secret='):
                 secret = arg.split('=')[1]
+
             elif arg.startswith('auth_id='):
                 auth_id = arg.split('=')[1]
+
             elif arg.startswith('frontend='):
                 frontend_server=frontend.ALL[arg.split('=')[1]]
+
+            elif arg.startswith('queue='):
+                frontend_opts['queue'] = arg.split('=')[1]
+
             else:
-                opt,val=arg.split('=')
-                frontend_opts[opt]=eval(val)
+                opt, val = arg.split('=')
+                frontend_opts[opt] = eval(val)
         
         run_method = lambda: cls.run(ip=ip, port=port, secret=secret, auth_id=auth_id,
                                      debug=debug, frontend_server=frontend_server,
@@ -77,7 +93,10 @@ class Server(object):
             print "usage: %s start|stop|restart|debug [option=value]" % sys.argv[0]
             sys.exit(2)
 
-        print "using: address: %s %s, frontend: %s"%(ip, port, frontend_server)
+        print "using: address: %s%s," % (ip, port and (':%s' % port) or ''),
+        if frontend_opts.get('queue'):
+            print "queue: %s," % frontend_opts['queue'],
+        print "frontend:", frontend_server
         actions[sys.argv[1]]()
 
         sys.exit(0)
@@ -101,7 +120,8 @@ class Server(object):
         self._callbacks = get_shared(self)
 
     def process_request(self, start_response, environ):
-        connection = make_server_connection(start_response, environ)
+        connection = make_server_connection(start_response, environ,
+            connection_protocol=self.connection_protocol)
         try:
             command, params = connection.load_request()
             if not command:
@@ -109,10 +129,12 @@ class Server(object):
         except:
             command, params = "_get_signatures_", []
 
-        return self._callbacks[command](connection, *params)
+        res = self._callbacks[command](connection, *params)
+        return res
 
     def process_upload_request(self, start_response, environ):
-        connection = make_server_connection(start_response, environ)
+        connection = make_server_connection(start_response, environ,
+            connection_protocol=self.connection_protocol)
         filename, filedata = connection.load_file()
 
         return self._callbacks[command](connection, filename, filedata)

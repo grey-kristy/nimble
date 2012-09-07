@@ -1,26 +1,34 @@
 import nimble.protocols.simple as simple
 import simplejson
 
-class ServerConnection(simple.ServerConnection):
-    def dump_response(self, data=None, is_error=False):
-        """
-        serializing function results to json protocol
-        @returns: string representation
-         @errors:
-        """
-        return simplejson.dumps({'is_error': is_error, 'results': data})
+def make_server_connection(BaseConnection):
+    NewBaseConnection = simple.make_server_connection(BaseConnection)
+    
+    class ServerConnection(NewBaseConnection):
+        def dump_response(self, data=None, is_error=False):
+            """
+            serializing function results to json protocol
+            @returns: string representation
+             @errors:
+            """
+            return simplejson.dumps({'is_error': is_error, 'results': data})
 
-    def load_request(self):
-        data = simplejson.loads(self.load_post_data(), encoding='utf8')
-        return data['command'], data['args']
+        def load_request(self):
+            data = simplejson.loads(self.load_post_data(), encoding='utf8')
+            return data['command'], data['args']
+    return ServerConnection
 
-class ClientConnection(simple.ClientConnection):
-    def dump_request(self, data):
-        command, args = data
-        return simplejson.dumps({'command': command, 'args': args})
+def make_client_connection(BaseConnection):
+    BaseConnection = simple.make_client_connection(BaseConnection)
 
-    def load_response(self, data):
-        data = simplejson.loads(data)
+    class ClientConnection(simple.ClientConnection):
+        def dump_request(self, data):
+            command, args = data
+            return simplejson.dumps({'command': command, 'args': args})
 
-        return data['is_error'], data['results']
+        def load_response(self, data):
+            data = simplejson.loads(data)
+
+            return data['is_error'], data['results']
+    return ClientConnection
 

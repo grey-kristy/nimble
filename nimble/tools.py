@@ -1,3 +1,6 @@
+import sys
+import os.path
+import logging
 import inspect
 
 def setup_django_environment(settings_module_string):
@@ -26,3 +29,24 @@ def object_type(obj):
 
 def object_type_string(obj):
     return '.'.join(object_type(obj))
+
+
+def die(msg):
+    print >> sys.stderr, msg
+    sys.exit(2)
+
+class Log(object):
+    def __init__(self, dir, log, level=logging.DEBUG):
+        self.log = logging.getLogger()
+        self.log.setLevel(level)
+
+        file = os.path.join(dir, log)
+        try:
+            handler = logging.FileHandler(file, 'a', 'utf-8')
+        except IOError as e:
+            die("Can't open log file %s\n%s" % (file, e.strerror))
+
+        formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s", "%m-%d %H:%M:%S")
+        handler.setFormatter(formatter)
+        self.log.addHandler(handler)
+
