@@ -129,6 +129,8 @@ class Server(object):
         except:
             command, params = "_get_signatures_", []
 
+        if command not in self._callbacks:
+            return connection.ERROR(['No such command: %s' % command])
         res = self._callbacks[command](connection, *params)
         return res
 
