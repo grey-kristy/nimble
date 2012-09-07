@@ -2,6 +2,7 @@ import nimble.protocols.simple as simple
 import nimble.protocols.json as json
 
 from nimble.protocols import wsgi
+from nimble.protocols import rabbitmq
 
 DEFAULT_PROTOCOL = json
 DEFAULT_CONNECTION_PROTOCOL = wsgi
@@ -22,7 +23,10 @@ def make_server_connection(start_response, environ,
 def make_client_connection(server, protocol=DEFAULT_PROTOCOL,
                            protocol_alias_selector=DEFAULT_PROTOCOL_ALIAS_SELECTOR,
                            connection_protocol=DEFAULT_CONNECTION_PROTOCOL,
-                           secret=None):
+                           secret=None, queue=None, channel=None):
     connection = protocol.make_client_connection(connection_protocol.ClientConnection)
-    return connection('%s/p:%s/'%(server, protocol_alias_selector[protocol]), secret=secret)
+    if connection_protocol is rabbitmq:
+        return connection(channel, queue=queue, secret=secret)
+    return connection('%s/p:%s/' % (server, protocol_alias_selector[protocol]), secret=secret)
+
 

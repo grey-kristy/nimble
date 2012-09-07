@@ -21,7 +21,7 @@ def make_server_connection(BaseConnection):
 def make_client_connection(BaseConnection):
     BaseConnection = simple.make_client_connection(BaseConnection)
 
-    class ClientConnection(simple.ClientConnection):
+    class ClientConnection(BaseConnection):
         def dump_request(self, data):
             command, args = data
             return simplejson.dumps({'command': command, 'args': args})

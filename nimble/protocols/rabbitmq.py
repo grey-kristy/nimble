@@ -48,9 +48,10 @@ class ServerConnection(object):
         raise NotImplemented
 
 class ClientConnection(object):
-    def __init__(self, server, secret=None):
-        self.server = server
+    def __init__(self, channel, queue, secret=None):
+        self.channel = channel
         self.secret = secret
+        self.queue = queue
 
     def load_response(self, data):
         raise NotImplemented
@@ -58,19 +59,8 @@ class ClientConnection(object):
     def dump_request(self, data):
         raise NotImplemented
 
-    def request(self, data):
-        post_body = self.dump_request(data)
-        try:
-            if not post_body:
-                raw_data = urllib2.urlopen(self.server).read()
-            else:
-                raw_data = urllib2.urlopen(self.server, data=post_body).read()
-        except urllib2.HTTPError, ex:
-            raise ServerIsDown('%s: %s'%(self.server, ex))
+    def publish(self, data):
+        body = self.dump_request(data)
+        self.channel.basic_publish(exchange='', routing_key=self.queue, body=body)
 
-        isError, returnValues = self.load_response(raw_data)
-        if isError:
-            raise NimbleException.load(returnValues)
-        
-        return returnValues
 
