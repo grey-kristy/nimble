@@ -99,7 +99,7 @@ class RabbitMQConsumer(object):
             sys.exit(2)
 
         def handle_delivery(channel, method_frame, header_frame, body):
-            print "Delivery", method_frame.delivery_tag
+            #print "Delivery", method_frame.delivery_tag
             environ = {
                 'content-type': header_frame.content_type,
                 'delivery-tag': method_frame.delivery_tag,
@@ -107,8 +107,10 @@ class RabbitMQConsumer(object):
                 'body': body
             }
             self.application(environ, None)
+            channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
-        self.channel.basic_consume(handle_delivery, queue=self.queue, no_ack=True)
+
+        self.channel.basic_consume(handle_delivery, queue=self.queue)
         self.channel.start_consuming()
 
     def async_loop(self):
