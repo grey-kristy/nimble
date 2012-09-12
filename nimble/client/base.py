@@ -1,4 +1,5 @@
 import functools
+import sys
 import socket
 from nimble.protocols.tools import make_client_connection, DEFAULT_PROTOCOL
 
@@ -54,23 +55,24 @@ def simple_publisher(self, shared_name, shared_method, channel, queue):
     return f
 
 class MQClient(object):
-    queue = None
+    QUEUE = None
     SERVER_CLASS = None
 
-    def __init__(self, queue=None, server_class=None, default_protocol=DEFAULT_PROTOCOL, secret=None):
-        queue = queue or self.queue
+    def __init__(self, server=None, queue=None, server_class=None,
+            default_protocol=DEFAULT_PROTOCOL, secret=None):
+        queue = queue or self.QUEUE
         self.queue = queue
         self.protocol = default_protocol
         self.secret = secret
+        self.server = server or '127.0.0.1'
 
         try:
             self._init_send_mq()
         except socket.error as e:
-            print "Can't connect to RabbitMQ: %s" % e
-            #log.error("Can't connect to RabbitMQ: %s" % e)
-            sys.exit(1)
+            print  >> sys.stderr, "Can't connect to RabbitMQ:", e
+            raise
 
-        server_class = server_class or SERVER_CLASS
+        server_class = server_class or self.SERVER_CLASS
         serverobj = server_class()
 
         for nv, meth in serverobj._callbacks.items():
@@ -80,6 +82,6 @@ class MQClient(object):
 
     def _init_send_mq(self):
         import pika
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.server))
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=self.queue)
