@@ -1,5 +1,6 @@
 import nimble.protocols.simple as simple
 import nimble.protocols.json as json
+import nimble.protocols.urlencoded as urlencoded
 
 from nimble.protocols import wsgi
 from nimble.protocols import rabbitmq
@@ -7,7 +8,7 @@ from nimble.protocols import rabbitmq
 DEFAULT_PROTOCOL = json
 DEFAULT_CONNECTION_PROTOCOL = wsgi
 
-DEFAULT_PROTOCOL_SELECTOR = {'1': simple, '2': json}
+DEFAULT_PROTOCOL_SELECTOR = {'1': simple, '2': json, '3': urlencoded}
 DEFAULT_PROTOCOL_ALIAS_SELECTOR = dict((p, a) for a, p in DEFAULT_PROTOCOL_SELECTOR.items())
 
 def make_server_connection(start_response, environ,
@@ -15,7 +16,8 @@ def make_server_connection(start_response, environ,
         connection_protocol=DEFAULT_CONNECTION_PROTOCOL):
 
     param = environ['PATH_INFO'][-5:]
-    protocol = param.startswith('/p:') and protocol_selector[param.rstrip('/')[-1]] \
+
+    protocol = param.startswith('/p:') and protocol_selector[param[-2]] \
         or DEFAULT_PROTOCOL
 
     return protocol.make_server_connection(connection_protocol.ServerConnection)(start_response, environ)

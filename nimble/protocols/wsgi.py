@@ -52,6 +52,9 @@ class ServerConnection(object):
         @returns: parameters structure
          @errors:
         """
+        if 'CONTENT_LENGTH' not in self.environ:
+            # not a POST request
+            return ''
         return self.environ['wsgi.input'].read(int(self.environ['CONTENT_LENGTH']))
 #        data = data.split('__', 1)
 #        self.secret = data[0]
