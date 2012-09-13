@@ -158,7 +158,7 @@ class Server(object):
             if not command:
                 command = "_get_signatures_"
         except:
-            command, params = "_get_signatures_", []
+            command, params, keyword_params = "_get_signatures_", [], {}
 
         if command not in self._callbacks:
             return connection.ERROR(['No such command: %s' % command])
