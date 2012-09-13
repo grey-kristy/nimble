@@ -1,4 +1,5 @@
 import sys
+import codecs
 import daemon
 
 from nimble.server.tools import get_shared, shared, Auth
@@ -25,18 +26,35 @@ class Server(object):
 
     @classmethod
     def run(cls, ip='127.0.0.1', port=9000, secret=None, auth_id=None, debug=False,
+            stderr=None, stdout=None,
             frontend_server=frontend.DEFAULT, **frontend_opts):
         if cls.singleton is None:
              cls.singleton = cls(ip=ip, port=port, secret=secret, auth_id=auth_id)
         
         cls.connection_protocol = frontend_server.connection_protocol
 
-        frontend_server(address=(ip,port), application=cls.application,
+        stderr_fd = stdout_fd = None
+        if stderr is not None:
+            stderr_fd = codecs.open(stderr, 'a+', 'utf-8')
+            sys.stderr = stderr_fd
+        if stdout is not None:
+            stdout_fd = codecs.open(stderr, 'a+', 'utf-8')
+            sys.stdout = stdout_fd
+
+        try:
+            frontend_server(address=(ip,port), application=cls.application,
                         **frontend_opts).loop()
+        finally:
+            if stdout_fd:
+                stdout_fd.close()
+            if stderr_fd:
+                stderr_fd.close()
 
     @classmethod
-    def run_daemon( cls, ip='127.0.0.1', port=9000, secret=None, auth_id=None, pidfile=None, fullLoadBeforeStart=False,
-                    debug=False, frontend_server=frontend.FlupServer, **frontend_opts):
+    def run_daemon( cls, ip='127.0.0.1', port=9000, secret=None, auth_id=None, pidfile=None,
+                    fullLoadBeforeStart=False, debug=False,
+                    stderr=None, stdout=None,
+                    frontend_server=frontend.FlupServer, **frontend_opts):
         for arg in sys.argv[2:]:
             if arg.startswith('port='):
                 port = arg.split('=')[1]
@@ -62,11 +80,17 @@ class Server(object):
             elif arg.startswith('queue='):
                 frontend_opts['queue'] = arg.split('=')[1]
 
+            elif arg.startswith('stderr='):
+                stderr = arg.split('=')[1]
+            elif arg.startswith('stdout='):
+                stdout = arg.split('=')[1]
+
             else:
                 opt, val = arg.split('=')
                 frontend_opts[opt] = eval(val)
         
         run_method = lambda: cls.run(ip=ip, port=port, secret=secret, auth_id=auth_id,
+                                     stderr=stderr, stdout=stdout,
                                      debug=debug, frontend_server=frontend_server,
                                      **frontend_opts)
 

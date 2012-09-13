@@ -1,3 +1,4 @@
+import sys, traceback
 import functools, inspect, urllib
 from nimble.errors import NimbleException, ServerError
 from nimble.server.errors import PermissionDenied
@@ -16,10 +17,13 @@ def process_exceptions(func):
         try:
             return func(self, connection, *args, **kwargs)
         except NimbleException, ex:
+            traceback.print_exc()
             return connection.ERROR(ex.dump())
         except Exception, ex:
+            traceback.print_exc()
             return connection.ERROR(ServerError(ex).dump())
         except:
+            traceback.print_exc()
             return connection.ERROR(NimbleException.dump_unhandled())
     return f
 
