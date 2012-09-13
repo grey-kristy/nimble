@@ -1,3 +1,5 @@
+import socket
+
 from nimble.protocols import wsgi
 from nimble.protocols import rabbitmq
 
@@ -77,17 +79,17 @@ class RabbitMQConsumer(object):
             raise TypeError('queue argument is required')
 
         try:
-            self._init_send_mq()
+            self._init_send_mq(**opts)
         except socket.error as e:
             print "Can't connect to RabbitMQ: %s" % e
             #log.error("Can't connect to RabbitMQ: %s" % e)
             sys.exit(2)
 
-    def _init_send_mq(self, queue=None):
+    def _init_send_mq(self, **opts):
         import pika
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.address))
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=self.queue)    
+        self.channel.queue_declare(queue=self.queue, **opts)    
         return (self.connection, self.channel)
 
     def loop(self):
@@ -135,7 +137,6 @@ class RabbitMQConsumer(object):
             self.channel.basic_consume(handle_delivery, queue=self.queue)
 
         def handle_delivery(channel, method_frame, header_frame, body):
-            print "Delivery", method_frame.delivery_tag
             environ = {
                 'content-type': header_frame.content_type,
                 'delivery-tag': method_frame.delivery_tag,
