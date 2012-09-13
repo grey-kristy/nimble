@@ -5,12 +5,14 @@ from nimble.protocols.tools import make_client_connection, DEFAULT_PROTOCOL
 
 def simple_request_over_http(self, shared_name, shared_method):
     @functools.wraps(shared_method)
-    def f(*args):
+    def f(*args, **kwargs):
         connection = make_client_connection(self.server, protocol=self.protocol,
                                             secret=self.secret)
-        returnValues = connection.request(data=(shared_name, args))
+        if kwargs:
+            return connection.request(data=(shared_name, args, kwargs))
+        else:
+            return connection.request(data=(shared_name, args))
 
-        return returnValues
     return f
 
 class ServerClient(object):
@@ -48,10 +50,13 @@ class StandaloneClient(object):
 def simple_publisher(self, shared_name, shared_method, channel, queue):
     from nimble.protocols import rabbitmq
     @functools.wraps(shared_method)
-    def f(*args):
+    def f(*args, **kwargs):
         connection = make_client_connection(None, channel=self.channel, protocol=self.protocol,
                                             secret=self.secret, connection_protocol=rabbitmq, queue=queue)
-        connection.publish(data=(shared_name, args))
+        if kwargs:
+            connection.publish(data=(shared_name, args, kwargs))
+        else:
+            connection.publish(data=(shared_name, args))
     return f
 
 class MQClient(object):

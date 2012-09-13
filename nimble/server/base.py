@@ -147,7 +147,14 @@ class Server(object):
         connection = make_server_connection(start_response, environ,
             connection_protocol=self.connection_protocol)
         try:
-            command, params = connection.load_request()
+            data = connection.load_request()
+            if len(data) == 2:
+                command, params = data
+                keyword_params = {}
+            elif len(data) == 3:
+                command, params, keyword_params = data
+            else:
+                return connection.ERROR(['connection.load_request() returned malformed data'])
             if not command:
                 command = "_get_signatures_"
         except:
@@ -155,7 +162,7 @@ class Server(object):
 
         if command not in self._callbacks:
             return connection.ERROR(['No such command: %s' % command])
-        res = self._callbacks[command](connection, *params)
+        res = self._callbacks[command](connection, *params, **keyword_params)
         return res
 
     def process_upload_request(self, start_response, environ):
