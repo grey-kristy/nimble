@@ -99,6 +99,8 @@ def make_ip_auth(ip_list):
     '''
     def cover(func):
         def decorator(self, connection, *args, **kwargs):
+            if not hasattr(connection, 'environ'):
+                return connection.ERROR(['no connection.environ'])
             real_ip = connection.environ.get('HTTP_X_REAL_IP')
             for ip in ip_list:
                 if ip == real_ip:
