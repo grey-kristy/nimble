@@ -87,3 +87,23 @@ def secret_check_required(func):
         return func(self, connection, *args, **kwargs)
     return f
 
+def make_ip_auth(ip_list):
+    '''Create authorization decorator by list of trusted IP address
+    example of usage:
+    ip_auth = make_ip_auth(['127.0.0.1', '192.168.1.1'])
+
+    @ip_auth
+    @shared
+    def my_handler(self, connection):
+        ...
+    '''
+    def cover(func):
+        def decorator(self, connection, *args, **kwargs):
+            real_ip = connection.environ.get('HTTP_X_REAL_IP')
+            for ip in ip_list:
+                if ip == real_ip:
+                    return func(self, connection, *args, **kwargs)
+            return connection.ERROR(['Untrusted IP: %s' % real_ip])
+#            raise PermissionDenied('Untrusted IP: %s' % real_ip)
+        return functools.wraps(func)(decorator)
+    return cover
