@@ -6,6 +6,9 @@ from nimble.server.tools import get_shared, shared, Auth
 import nimble.server.frontend as frontend
 
 from nimble.protocols.tools import make_server_connection
+from nimble.protocols import wsgi
+
+DEFAULT_CONNECTION_PROTOCOL = wsgi
 
 class Server(object):
     """
@@ -18,7 +21,7 @@ class Server(object):
     """
 
     singleton = None
-    connection_protocol = None
+    connection_protocol = DEFAULT_CONNECTION_PROTOCOL
 
     @classmethod
     def application(cls, environ, start_response):
