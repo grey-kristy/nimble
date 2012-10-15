@@ -49,31 +49,30 @@ function NimbleJSON() {
 
     this.dump = function(command, args) {
         return JSON.stringify({command: command,
-                args   : args});
-    }
+            args   : args});
+    };
 
     this.load = function(text) {
-        var obj = JSON.parse(text);
-        return obj;
+        return JSON.parse(text);
     };
 }
 
 /*
-    Main class
+ Main class
 
-    Usage example:
-    var need_json = False;
-    if(need_json)
-        conn = new NimbleConnection('http://server/', new NimbleJSON());
-    else
-        conn = new NimbleConnection('http://server/');
-    myajaxframework.request(conn.get_url(),
-                            {method: POST,
-                             postBody: conn.make_request('get_from_server', ['object', 2]),
-                             onResponse: function(resp){var res = conn.parse_response(resp.text);}
-                            }
-    );
-*/
+ Usage example:
+ var need_json = False;
+ if(need_json)
+ conn = new NimbleConnection('http://server/', new NimbleJSON());
+ else
+ conn = new NimbleConnection('http://server/');
+ myajaxframework.request(conn.get_url(),
+ {method: POST,
+ postBody: conn.make_request('get_from_server', ['object', 2]),
+ onResponse: function(resp){var res = conn.parse_response(resp.text);}
+ }
+ );
+ */
 
 function NimbleConnection(url, protocol) {
     this.server = url;
@@ -95,23 +94,23 @@ function NimbleConnection(url, protocol) {
         return obj.results;
     };
 
-    this.request_by_jquery = function(command, params, onsuccess, onerror) {
-	    var make_response_func = function(context) {
-	      return function(text) {
-          try {
-            resp = context.parse_response(text);
-            onsuccess(resp);
-          }
-          catch(error) {
-            onerror(error);
-          }
-	    };
-	};
+    this.request_by_jquery = function(command, params, onsuccess, onerror, ondisconnect) {
+        var make_response_func = function(context) {
+            return function(text) {
+                try {
+                    resp = context.parse_response(text);
+                    onsuccess(resp);
+                }
+                catch(error) {
+                    onerror(error);
+                }
+            };
+        };
 
-	$.ajax({type: "POST",
-	        url: this.get_url(),
-	        data: this.make_request(command,params),
-	        dataType: 'text'
-	}).done(make_response_func(this));
+        $.ajax({type: "POST",
+            url: this.get_url(),
+            data: this.make_request(command,params),
+            dataType: 'text'
+        }).done(make_response_func(this)).fail(ondisconnect || function () {});
     };
 }
