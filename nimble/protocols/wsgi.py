@@ -99,10 +99,12 @@ class ClientConnection(object):
     def request(self, data):
         post_body = self.dump_request(data)
         try:
+            agent = urllib2.build_opener()
+            agent.addheaders.append(('X-Real-IP', '127.0.0.1'))
             if not post_body:
-                raw_data = urllib2.urlopen(self.server).read()
+                raw_data = agent.open(self.server).read()
             else:
-                raw_data = urllib2.urlopen(self.server, data=post_body).read()
+                raw_data = agent.open(self.server, data=post_body).read()
         except urllib2.HTTPError, ex:
             raise ServerIsDown('%s: %s'%(self.server, ex))
 
