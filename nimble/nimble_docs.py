@@ -35,6 +35,8 @@ def read_nimble(file, wiki=0):
         if '@shared' in line:
             decors = func = desc = ''
             off = 0
+
+            # get decorators
             if '@' in all[count-2]:
                 decors = '%s\n' % all[count-2].strip()
             if '@' in all[count-1] or '#' in all[count-1]:
@@ -44,12 +46,22 @@ def read_nimble(file, wiki=0):
                 decors += all[count+1].strip()
                 off = 1
 
+            # get functions signature
+            if not re.match("\s*def", all[count+1+off]):
+                off += 1
             func = all[count+1+off].strip()
             if ':' not in func:
                 func += all[count+2+off].strip()
+                off += 1
 
+            # get doc string
             if "'''" in all[count+2+off]:
                 desc = all[count+2+off].strip()
+                for i in range(30):
+                    if not re.match(".*'''$", all[count+2+off+i]):
+                        desc += '\n' + all[count+3+off+i].strip()
+                    else:
+                        break
 
             print_func(decors,func,desc, wiki)
         count += 1 
