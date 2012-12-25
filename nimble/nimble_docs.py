@@ -58,7 +58,15 @@ def read_nimble(file, wiki=0):
             if "'''" in all[count+2+off]:
                 desc = all[count+2+off].strip()
                 for i in range(30):
-                    if not re.match(".*'''$", all[count+2+off+i]):
+                    if not re.match(".+'''\s*$", all[count+2+off+i]):
+                        desc += '\n' + all[count+3+off+i].strip()
+                    else:
+                        break
+
+            if '"""' in all[count+2+off]:
+                desc = all[count+2+off].strip()
+                for i in range(30):
+                    if not re.match(r'.+"""', all[count+2+off+i]):
                         desc += '\n' + all[count+3+off+i].strip()
                     else:
                         break

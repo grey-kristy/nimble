@@ -7,8 +7,8 @@ class GEventServer(object):
     connection_protocol = wsgi
 
     def __init__(self, address, application, **opts):
-        import gevent.pywsgi
-        self.server = gevent.pywsgi.WSGIServer
+        import gevent.wsgi
+        self.server = gevent.wsgi.WSGIServer
         self.application = application
         self.address = address
         self.opts = opts
