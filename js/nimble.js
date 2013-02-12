@@ -76,7 +76,7 @@ function NimbleJSON() {
 
 function NimbleConnection(url, protocol) {
     this.server = url;
-    this.protocol = typeof protocol === 'object'?protocol:new NimbleSimple();
+    this.protocol = typeof protocol === 'object'?protocol:new NimbleJSON();
 
     this.get_url = function() {
         return this.server+'/p:'+this.protocol.id+'/';
