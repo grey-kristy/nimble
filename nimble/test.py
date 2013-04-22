@@ -80,9 +80,9 @@ def direct_call(server, data, path_info):
 
 def simple_request_over_direct_call(self, shared_name, shared_method):
     @functools.wraps(shared_method)
-    def f(*args):
+    def f(*args, **kwargs):
         connection = make_client_connection(server=None)
-        postBody = connection.dump_request(data=(shared_name, args))
+        postBody = connection.dump_request(data=(shared_name, args, kwargs))
         response, t = direct_call(self.server, postBody, connection.server)
         isError, answer = connection.load_response(response)
         if isError:
