@@ -52,10 +52,8 @@ class ServerConnection(object):
         @returns: parameters structure
          @errors:
         """
-        return self.environ['wsgi.input'].read(int(self.environ['CONTENT_LENGTH']))
-#        data = data.split('__', 1)
-#        self.secret = data[0]
-#        return data[1]
+        length = int(self.environ.get('CONTENT_LENGTH', 0))
+        return self.environ['wsgi.input'].read(length)
 
     def load_cookies(self):
         try:

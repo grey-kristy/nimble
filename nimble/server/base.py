@@ -1,14 +1,12 @@
 import sys
 import codecs
 import daemon
+import traceback
 
 from nimble.server.tools import get_shared, shared, Auth
 import nimble.server.frontend as frontend
 
 from nimble.protocols.tools import make_server_connection
-from nimble.protocols import wsgi
-
-DEFAULT_CONNECTION_PROTOCOL = wsgi
 
 class Server(object):
     """
@@ -21,7 +19,6 @@ class Server(object):
     """
 
     singleton = None
-    connection_protocol = DEFAULT_CONNECTION_PROTOCOL
 
     @classmethod
     def application(cls, environ, start_response):
@@ -33,8 +30,6 @@ class Server(object):
             frontend_server=frontend.DEFAULT, **frontend_opts):
         if cls.singleton is None:
              cls.singleton = cls(ip=ip, port=port, secret=secret, auth_id=auth_id)
-        
-        cls.connection_protocol = frontend_server.connection_protocol
 
         stderr_fd = stdout_fd = None
         if stderr is not None:
@@ -47,6 +42,8 @@ class Server(object):
         try:
             frontend_server(address=(ip,port), application=cls.application,
                         **frontend_opts).loop()
+        except:
+            print >> sys.stderr, 'frontend failed:', traceback.format_exc()
         finally:
             if stdout_fd:
                 stdout_fd.close()
@@ -58,6 +55,7 @@ class Server(object):
                     fullLoadBeforeStart=False, debug=False,
                     stderr=None, stdout=None,
                     frontend_server=frontend.FlupServer, **frontend_opts):
+        #print 'run_daemon', cls
         for arg in sys.argv[2:]:
             if arg.startswith('port='):
                 port = arg.split('=')[1]
@@ -91,7 +89,7 @@ class Server(object):
             else:
                 opt, val = arg.split('=')
                 frontend_opts[opt] = eval(val)
-        
+
         run_method = lambda: cls.run(ip=ip, port=port, secret=secret, auth_id=auth_id,
                                      stderr=stderr, stdout=stdout,
                                      debug=debug, frontend_server=frontend_server,
@@ -101,28 +99,21 @@ class Server(object):
             def run(self):
                 run_method()
 
-        pidfile = '/tmp/daemon_%s.pid'%cls.__name__ if not pidfile else pidfile
+        pidfile = '/tmp/daemon_%s.pid' % cls.__name__ if not pidfile else pidfile
         d = MyDaemon(pidfile)
 
-        def loadable(func):
-            def f():
-                #makes an opportunity to load everything just before shutting down last instance or to invoke init before any real work
-                # if fullLoadBeforeStart:
-                #     cls.get_instance(secret=secret, auth_id=auth_id, port=port, ip=ip)
-                return func()
-            return f
+        actions = {
+            'start': d.start,
+            'stop': d.stop,
+            'restart': d.restart,
+            'debug': run_method
+        }
 
-        actions = {'start': loadable(d.start), 'stop': d.stop,
-                   'restart': loadable(d.restart),
-                   'debug': loadable(run_method) }
-
-        if len(sys.argv) < 2 or sys.argv[1] not in actions.keys():
-            print "usage: %s start|stop|restart|debug [option=value]" % sys.argv[0]
+        if len(sys.argv) < 2 or sys.argv[1] not in actions:
+            print >> sys.stderr, "usage: %s start|stop|restart|debug [option=value]" % sys.argv[0]
             sys.exit(2)
 
         print "using: address: %s%s," % (ip, port and (':%s' % port) or ''),
-        if frontend_opts.get('queue'):
-            print "queue: %s," % frontend_opts['queue'],
         print "frontend:", frontend_server
         actions[sys.argv[1]]()
 
@@ -147,24 +138,19 @@ class Server(object):
         self._callbacks = get_shared(self)
 
     def process_request(self, start_response, environ):
-        connection = make_server_connection(start_response, environ,
-            connection_protocol=self.connection_protocol)
+        connection = make_server_connection(start_response, environ)
         try:
             data = connection.load_request()
-            if len(data) == 2:
-                command, params = data
-                keyword_params = {}
-            elif len(data) == 3:
-                command, params, keyword_params = data
-            else:
-                return connection.ERROR(['connection.load_request() returned malformed data'])
+            command, params, keyword_params = data
             if not command:
                 command = "_get_signatures_"
-        except:
-            command, params, keyword_params = "_get_signatures_", [], {}
+        except Exception as ex:
+            return connection.ERROR([traceback.format_exc()])
+            #command, params, keyword_params = "_get_signatures_", [], {}
 
         if command not in self._callbacks:
-            return connection.ERROR(['No such command: %s' % command])
+            msg = 'No such command: %s' % command
+            return connection.ERROR([msg])
         res = self._callbacks[command](connection, *params, **keyword_params)
         return res
 

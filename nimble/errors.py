@@ -42,7 +42,7 @@ class NimbleException(Exception):
                 cls = getattr(module, dumped_exception[0])
                 data = urllib.unquote(dumped_exception[2])
                 return cls.load_exception(data)
-            except ImportError:
+            except (ImportError, TypeError):
                 pass
         return Exception(dumped_exception)
 
