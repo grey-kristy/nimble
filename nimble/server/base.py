@@ -90,10 +90,11 @@ class Server(object):
                 opt, val = arg.split('=')
                 frontend_opts[opt] = eval(val)
 
-        run_method = lambda: cls.run(ip=ip, port=port, secret=secret, auth_id=auth_id,
-                                     stderr=stderr, stdout=stdout,
-                                     debug=debug, frontend_server=frontend_server,
-                                     **frontend_opts)
+        run_kwargs = dict(ip=ip, port=port, secret=secret, auth_id=auth_id,
+                          stderr=stderr, stdout=stdout,
+                          debug=debug, frontend_server=frontend_server)
+        run_kwargs.update(frontend_opts)
+        run_method = lambda: cls.run(**run_kwargs)
 
         class MyDaemon(daemon.Daemon):
             def run(self):
