@@ -18,13 +18,13 @@ class ServerClient(object):
     """
     SERVER_CLASS = None
 
-    def __init__(self, server, default_protocol=DEFAULT_PROTOCOL, request_maker=simple_request_over_http, secret=None):
-        serverobj = self.SERVER_CLASS()
+    def __init__(self, server, log=None, default_protocol=DEFAULT_PROTOCOL, request_maker=simple_request_over_http, secret=None):
+        self.serverobj = self.SERVER_CLASS(log=log)
         self.protocol = default_protocol
         self.server = server
         self.secret = secret
 
-        for nv, meth in serverobj._callbacks.items():
+        for nv, meth in self.serverobj._callbacks.items():
             f = request_maker(self, shared_name=nv, shared_method=meth)
             setattr(self, meth.__name__, f)
 
@@ -41,4 +41,3 @@ class StandaloneClient(object):
         for meth_name in signatures:
             f = request_maker(self, shared_name=meth_name, shared_method=empty)
             setattr(self, meth_name, f)
-

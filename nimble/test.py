@@ -83,28 +83,31 @@ def simple_request_over_direct_call(self, shared_name, shared_method):
     def f(*args, **kwargs):
         connection = make_client_connection(server=None)
         postBody = connection.dump_request(data=(shared_name, args, kwargs))
-        response, t = direct_call(self.server, postBody, connection.server)
+        response, t = direct_call(self.serverobj, postBody, connection.server)
         isError, answer = connection.load_response(response)
         if isError:
             raise NimbleException.load(answer)
         return answer, t, postBody
     return f
 
+class TestLogger(object):
+    def debug(self, msg):
+        print 'SERVER LOG: %s'%msg
+
 class TestingClient(ServerClient):
-    def __init__(self, serverClass, secret=None):
+    def __init__(self, serverClass):
         self.SERVER_CLASS = serverClass
 
-        t0 = NOW()
-        server = serverClass(secret=secret)
-        t = NOW()
-
-        print 'server %s initialized in %s'%(serverClass.__name__, t-t0)
-        print '--------------------------------------------'
         print 'rescode (overheaded time): name: additional info'
         print '--------------------------------------------'
         connection = make_client_connection(server=None)
         print 'server is tested with connection: %s'%object_type_string(connection)
         print '--------------------------------------------'
 
-        ServerClient.__init__(self, server=server, request_maker=simple_request_over_direct_call)
+        ServerClient.__init__(self, server=None, log=TestLogger(), request_maker=simple_request_over_direct_call)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.serverobj.shutdown()

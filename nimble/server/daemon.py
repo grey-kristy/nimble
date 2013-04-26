@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os, time, atexit
-from signal import SIGTERM 
+import signal
 
 class Daemon:
 	"""
@@ -103,10 +103,17 @@ class Daemon:
 
 		# Try killing the daemon process	
 		try:
-			while 1:
-				import signal
-				os.kill(pid, signal.SIGKILL)
-				time.sleep(0.1)
+			tryouts = 0
+			while True:
+				os.kill(pid, signal.SIGTERM)
+				tryouts += 1
+				time.sleep(1)
+
+				if tryouts > 10:
+					while True:
+						os.kill(pid, signal.SIGKILL)
+						time.sleep(0.1)
+					break;
 		except OSError, err:
 			err = str(err)
 			if err.find("No such process") > 0:

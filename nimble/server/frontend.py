@@ -1,11 +1,11 @@
-import socket
-
+import functools
 
 class GEventServer(object):
-    def __init__(self, address, application, **opts):
+    def __init__(self, address, application, application_shutdown, **opts):
         import gevent.wsgi
         self.server = gevent.wsgi.WSGIServer
         self.application = application
+        self.setup_signals(application_shutdown)
         self.address = address
         self.opts = opts
 
@@ -19,34 +19,18 @@ class GEventServer(object):
         server.backlog = backlog
         server.serve_forever()
 
-    def multicore_loop(self):
-       import sys
-       from gevent.socket import create_connection
-       from gevent import wsgi
-       from multiprocessing import Process, current_process, cpu_count
-
-       listener = create_connection(self.address)
-
-       def serve_forever(listener):
-           self.server(listener, self.application, backlog=1024, **self.opts).serve_forever()
-
-       number_of_processes = cpu_count()-1
-       print 'Starting %s processes' % number_of_processes
-       for i in range(number_of_processes):
-           procs.append(Process(target=serve_forever, args=(listener,)))
-
-       for p in procs:
-           p.start()
-
-       serve_forever(listener)
-       for p in procs:
-           p.join()
+    def setup_signals(self, application_shutdown):
+        import gevent, signal
+        application_shutdown = functools.partial(application_shutdown, signum=None, frame=None)
+        gevent.signal(signal.SIGTERM, application_shutdown)
+        gevent.signal(signal.SIGQUIT, application_shutdown)
 
 class FlupServer(object):
-    def __init__(self, address, application, **opts):
+    def __init__(self, address, application, application_shutdown, **opts):
         import flup.server.fcgi
         self.server = flup.server.fcgi.WSGIServer
         self.application = application
+        self.setup_signals(application_shutdown)
         self.address = address
         self.opts = opts
 
@@ -54,6 +38,9 @@ class FlupServer(object):
         server = self.server(self.application, bindAddress=self.address, **self.opts)
         server.run()
 
+    def setup_signals(self, application_shutdown):
+        import signal
+        signal.signal(signal.SIGTERM, application_shutdown)
 
 ALL = {
     'flup': FlupServer,
